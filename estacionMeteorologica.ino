@@ -147,5 +147,56 @@ void verifyBatteryLevel()
           LowPower.idle(SLEEP_8S, ADC_OFF, TIMER5_OFF, TIMER4_OFF,
                 TIMER3_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF,
                 USART3_OFF, USART2_OFF, USART1_OFF, USART0_OFF, TWI_OFF);
+    
+    if(generalFlag < 3)
+    {
+        generalFlag++;
+    }
+
+    else 
+        {
+            generalFlag = 0;
+            digitalWrite(redLED, !digitalRead(redLED));
+        }
+    }
+    else{
+        digitalWrite(redLED, LOW);
     }
 }
+
+// Function to refresh the display
+// only works  if the switch is ON, to save energy
+void refresh_display()
+{
+    if(digitalRead(screenPower) == LOW){
+        display.setCursor(0,0);
+        display.print("Battery porcentage left: ");
+        display.print(displayBattery);
+        display.println("%");
+        display.print("Temperature: ");
+        display.print(displayTemperature);
+        display.println("Celsius");
+        display.print("Humidity: ");
+        display.print(displayHumidity);
+        display.println("%");
+        display.print("Wind: ");
+        display.print(displayWind);
+        display.println("m/s");
+        display.print("Rain: ");
+        if(displayRain == 1)
+        {
+            display.println("Rain");
+        }
+        else
+        {
+            display.println("No rain");
+        }
+        display.print("Light: ");
+        display.print(ilimunationVoltage);
+        display.println("Lux");
+
+    }
+    display.display();
+    display.clearDisplay();
+}
+
