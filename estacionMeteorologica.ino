@@ -19,8 +19,8 @@
 // LED pins and definition
 
 // Axis 
-const int yAxisInput = 6;
-const int xAxisInput = 7;
+const int yAxisInput = 7;
+const int xAxisInput = 6;
 
 // LEDS
 
@@ -68,6 +68,9 @@ float normalizedHumidity;
 int windValue;
 int displayWind;
 float windNormalized;
+float windVoltage;
+float windSpeed;
+
 
 // Variables for the rain
 
@@ -92,15 +95,15 @@ const long darknessResistance = 500;
 const int resistanceToLight = 12.5;
 const int calibrationResistance = 10;
 const int pinLDR = A1;
-int lightSourceVoltage;
+int LDRPinRead;
 int ilimunationVoltage;
 
 // Variables for keeping track of the time
 
 unsigned long startingTime;
 unsigned long currentTime;
-unsigned long generalCurrentTime;
-unsigned long generalStartingTime;
+unsigned long globalCurrentTime;
+unsigned long globalStartingTime;
 const unsigned long tenMinutes = 600000; // Value in ms
 unsigned int startTimerEnabled = 1;
 
@@ -113,10 +116,10 @@ int yInputServo;
 
 // Misc variables
 
-int generalCounter_0 = 0;
-int generalCounter_1 = 0;
+int globalCounter_0 = 0;
+int globalCounter_1 = 0;
 int flashes = 0;
-int generalFlag = 0;
+int globalFlag = 0;
 
 // S-H equation
 
@@ -148,14 +151,14 @@ void verifyBatteryLevel()
                 TIMER3_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF,
                 USART3_OFF, USART2_OFF, USART1_OFF, USART0_OFF, TWI_OFF);
     
-    if(generalFlag < 3)
+    if(globalFlag < 3)
     {
-        generalFlag++;
+        globalFlag++;
     }
 
     else 
         {
-            generalFlag = 0;
+            globalFlag = 0;
             digitalWrite(redLED, !digitalRead(redLED));
         }
     }
@@ -237,6 +240,17 @@ void refresh_serial()
     }
 }
 
+void adjustSolarPanel(){
+  xInputServo = analogRead(xAxisInput);
+  yInputServo = analogRead(yAxisInput);
+
+  xInputServo = map(xInputServo, 0, 1023, 0, 180);
+  yInputServo = map(yInputServo, 0, 1023, 0, 180);
+
+  xAxis.write(round(xInputServo));
+  yAxis.write(round(yInputServo));
+}
+
 // Function to check if there is rain present
 
 void checkIfRaining()
@@ -263,4 +277,154 @@ void verifyMemory()
             EEMPROM.wirte(i, 0);
         }
     }
+}
+
+void writeToMemory()
+{
+    globalCurrentTime = millis();
+    if(globalCurrentTime - globalStartingTime >= tenMinutes/2)
+    {
+        verifyMemory();
+        EEMPROM.write(eempromAddress, displayTemperature);
+        eempromAddress++;
+
+        verifyMemory();
+        EEMPROM.write(eempromAddress, displayHumidity);
+        eempromAddress++;
+
+        verifyMemory();
+        EEMPROM.write(eempromAddress, displayLight);
+        eempromAddress++;
+
+        verifyMemory();
+        EEMPROM.write(eempromAddress, displayWind);
+        eempromAddress++;
+
+        verifyMemory();
+        EEMPROM.write(eempromAddress, displayRain);
+        eempromAddress++;
+
+        globalStartingTime = globalCurrentTime;
+    }
+}
+
+// Setup function
+
+void setup()
+{
+    Serial.begin(9600);
+    display.begin();
+    display.setContrast(75);
+    display.display();
+    delay(500);
+    display.clearDisplay();   
+    display.setTextSize(1);
+    display.setTextColor(BLACK);
+
+    // SET specific pins as I/O
+
+    pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(blueLED, OUTPUT);
+    pinMode(redLED, OUTPUT);
+    pinMode(communication, INPUT);
+    pinMode(screenPower, INPUT);
+    pinMode(rainSensor, INPUT);
+
+    // Configure the servos
+
+    xAxis.attach(8, 1000, 2000);
+    yAxus.attach(9, 1000, 2000);
+
+    // Start execution timer
+    globalStartingTime = millis();
+
+    // Set all EEPROM memory to 0
+    for (int i = 0 ; i < EEPROM.length() ; i++) {
+        EEPROM.write(i, 0);
+      }
+
+}
+
+// Loop function
+
+void loop()
+{
+    if (digitalWrite(communication) == HIGH)
+    {
+        digitalRead(blueLED, LOW);
+        flashes = 0;
+        globalCounter_0 = 0;
+        globalCounter_1 = 0;
+
+    }
+    if(digitalRead(communication) == LOW)
+    {
+        if(flashes < 10)
+        {
+            if(globalCounter_0 < 10)
+            {
+                globalCounter_0 = globalCounter_0 + 1;
+            }
+            else
+            {
+                digitalWirte(blueLED, !digitalRead(blueLED));
+                flashes = flahes + 1;
+                globalCounter_0 = 0;
+            }
+        }
+        else
+        {
+            if(globalCounter_1 < 90)
+            {
+                globalCounter_1 = globalCounter_1 + 1;
+            }
+            else
+            {
+                globalCounter_1 = 0;
+                flashes = 0;
+            }
+        }
+    }
+    LDRPinRead = analogRead(LDRPin);
+    ilimunationVoltage = ((long)LDRPinRead*darknessResistance*10)/((long)resistanceToLight*calibrationResistance*(1024-LDRPinRead));
+    // Read values for the temp sensor
+    thermistorValue = analogRead(A0);
+    hartEquation();
+    displayTemperature = round(TEMP);
+
+    // Read values for the humidity sensor
+    humidityVale = analogRead(A15);
+    normalizedHumidity = humidityVale/10.23;
+    displayHumidity = round(normalizedHumidity);
+
+    // Read values for the Wind sensor
+    windValue = analogRead(A14);
+    windNormalized = windValue/10.23;
+    windVoltage = windValue/204.6;
+    windSpeed = (windVoltage)*1000/(1.525*32.4);
+    displayWind = windSpeed;
+
+    // Read values for the battery;
+    batteryValue = analogRead(A13)-926;
+    batteryNormalized = batteryValue/0.96;
+
+    if(batteryNormalized >= 0)
+    {
+        displayBattery = round(batteryNormalized);
+    }
+    else
+    {
+        displayBattery = 0;
+    }
+
+    verifyBatteryLevel();
+    checkIfRaining();
+    writeToMemory();
+    adjustSolarPanel();
+    refresh_serial();
+    refresh_display();
+
+
+
+
 }
