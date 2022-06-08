@@ -106,4 +106,46 @@ unsigned int startTimerEnabled = 1;
 
 // Variables to configure the servos
 
+Servo yAxis;
+Servo xAxis;
+int xInputServo;
+int yInputServo;
 
+// Misc variables
+
+int generalCounter_0 = 0;
+int generalCounter_1 = 0;
+int flashes = 0;
+int generalFlag = 0;
+
+// S-H equation
+
+void hartEquation()
+{
+    R2 = R1 * (1023.0 / (float)thermistorValue - 1.0);
+    logR2 = log(R2);
+    TEMP = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2));
+    TEMP = TEMP - 273.15; // Convert to celsius
+}
+
+// Blink LEDs
+
+void blink()
+{
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(300);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(300);
+}
+
+// Verify battery level
+
+void verifyBatteryLevel()
+{
+    if (displayBattery <= 25) // 25% of battery
+    {
+          LowPower.idle(SLEEP_8S, ADC_OFF, TIMER5_OFF, TIMER4_OFF,
+                TIMER3_OFF, TIMER2_OFF, TIMER1_OFF, TIMER0_OFF, SPI_OFF,
+                USART3_OFF, USART2_OFF, USART1_OFF, USART0_OFF, TWI_OFF);
+    }
+}
