@@ -236,3 +236,31 @@ void refresh_serial()
         }
     }
 }
+
+// Function to check if there is rain present
+
+void checkIfRaining()
+{
+    if(digitalRead(rainSensor) == LOW)
+    {
+        displayRain = 1;
+    }
+    else
+    {
+        displayRain = 0;
+    }
+}
+
+// Function to verify EEPROM memory
+
+void verifyMemory()
+{
+    if (eempromAddress == EEPROM.leng())
+    {
+        eempromAddress = 0;
+        for( int i = 0; i < EEPROM.length(); i++)
+        {
+            EEMPROM.wirte(i, 0);
+        }
+    }
+}
