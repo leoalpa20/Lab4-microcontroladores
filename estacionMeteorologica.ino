@@ -200,3 +200,39 @@ void refresh_display()
     display.clearDisplay();
 }
 
+// Refreshes the serial comm if the switch is OFF, prints to serial
+
+void refresh_serial()
+{
+    if(digitalRead(communication) == LOW)
+    {
+        if(startTimerEnabled == 1)
+        {
+            startingTime = millis();
+            startTimerEnabled = 0;
+        }
+        currentTime = millis();
+        if(currentTime - startingTime >= tenMinutes)
+        {
+            Serial.print(displayBattery);
+            Serial.print(",");
+            Serial.print(displayTemperature);
+            Serial.print(",");
+            Serial.print(displayHumidity);
+            Serial.print(",");
+            Serial.print(displayWind);
+            Serial.print(",");
+            if(displayRain == 1)
+            {
+                Serial.print("Yes");
+            }
+            else
+            {
+                Serial.print("No rain");
+            }
+            Serial.print(",");
+            Serial.println(ilimunationVoltage);
+            startTimerEnabled = 1;
+        }
+    }
+}
