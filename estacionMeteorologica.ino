@@ -38,7 +38,7 @@ const int screenPower = 22;
 
 Adafruit_PCD8544 display = Adafruit_PCD8544(7, 5, 6, 4, 8);
 
-// EEMPROM ADDRESS
+// EEPROM ADDRESS
 
 int eempromAddress = 0;
 
@@ -94,7 +94,7 @@ int displayLight;
 const long darknessResistance = 500;
 const int resistanceToLight = 12.5;
 const int calibrationResistance = 10;
-const int pinLDR = A1;
+const int LDRPin = A1;
 int LDRPinRead;
 int ilimunationVoltage;
 
@@ -104,7 +104,7 @@ unsigned long startingTime;
 unsigned long currentTime;
 unsigned long globalCurrentTime;
 unsigned long globalStartingTime;
-const unsigned long tenMinutes = 600000; // Value in ms
+const unsigned long tenMinutes = 6000; // Value in ms
 unsigned int startTimerEnabled = 1;
 
 // Variables to configure the servos
@@ -173,13 +173,13 @@ void refresh_display()
 {
     if(digitalRead(screenPower) == LOW){
         display.setCursor(0,0);
-        display.print("Battery porcentage left: ");
+        display.print("Batt: ");
         display.print(displayBattery);
         display.println("%");
-        display.print("Temperature: ");
+        display.print("Temp: ");
         display.print(displayTemperature);
-        display.println("Celsius");
-        display.print("Humidity: ");
+        display.println("C");
+        display.print("Hum: ");
         display.print(displayHumidity);
         display.println("%");
         display.print("Wind: ");
@@ -269,12 +269,12 @@ void checkIfRaining()
 
 void verifyMemory()
 {
-    if (eempromAddress == EEPROM.leng())
+    if (eempromAddress == EEPROM.length())
     {
         eempromAddress = 0;
         for( int i = 0; i < EEPROM.length(); i++)
         {
-            EEMPROM.wirte(i, 0);
+            EEPROM.write(i, 0);
         }
     }
 }
@@ -285,23 +285,23 @@ void writeToMemory()
     if(globalCurrentTime - globalStartingTime >= tenMinutes/2)
     {
         verifyMemory();
-        EEMPROM.write(eempromAddress, displayTemperature);
+        EEPROM.write(eempromAddress, displayTemperature);
         eempromAddress++;
 
         verifyMemory();
-        EEMPROM.write(eempromAddress, displayHumidity);
+        EEPROM.write(eempromAddress, displayHumidity);
         eempromAddress++;
 
         verifyMemory();
-        EEMPROM.write(eempromAddress, displayLight);
+        EEPROM.write(eempromAddress, displayLight);
         eempromAddress++;
 
         verifyMemory();
-        EEMPROM.write(eempromAddress, displayWind);
+        EEPROM.write(eempromAddress, displayWind);
         eempromAddress++;
 
         verifyMemory();
-        EEMPROM.write(eempromAddress, displayRain);
+        EEPROM.write(eempromAddress, displayRain);
         eempromAddress++;
 
         globalStartingTime = globalCurrentTime;
@@ -333,7 +333,7 @@ void setup()
     // Configure the servos
 
     xAxis.attach(8, 1000, 2000);
-    yAxus.attach(9, 1000, 2000);
+    yAxis.attach(9, 1000, 2000);
 
     // Start execution timer
     globalStartingTime = millis();
@@ -349,9 +349,9 @@ void setup()
 
 void loop()
 {
-    if (digitalWrite(communication) == HIGH)
+    if (digitalRead(communication) == HIGH)
     {
-        digitalRead(blueLED, LOW);
+        digitalWrite(blueLED, LOW);
         flashes = 0;
         globalCounter_0 = 0;
         globalCounter_1 = 0;
@@ -367,8 +367,8 @@ void loop()
             }
             else
             {
-                digitalWirte(blueLED, !digitalRead(blueLED));
-                flashes = flahes + 1;
+                digitalWrite(blueLED, !digitalRead(blueLED));
+                flashes = flashes + 1;
                 globalCounter_0 = 0;
             }
         }
