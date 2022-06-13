@@ -47,7 +47,6 @@ int eempromAddress = 0;
 
 // Thermistor resistance
 
-float R1 = 100000;
 float logR2, R2, TEMP;
 // obtained from  https://www.thinksrs.com/downloads/programs/Therm%20Calc/NTCCalibrator/NTCcalculator.html
 float c1 = 0.8586139205e-03, c2 = 2.059709585e-04, c3 = 0.8130635267e-07;
@@ -74,8 +73,6 @@ float windSpeed;
 
 // Variables for the rain
 
-float rainNormalized;
-int rainValue;
 int displayRain;
 
 // Variables for the battery
@@ -125,10 +122,8 @@ int globalFlag = 0;
 
 void hartEquation()
 {
-    R2 = R1 * (1023.0 / (float)thermistorValue - 1.0);
-    logR2 = log(R2);
-    TEMP = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2));
-    TEMP = TEMP - 273.15; // Convert to celsius
+    R2 = log(100000 * (1023.0 / (float)thermistorValue - 1.0));
+    TEMP = (1.0 / (c1 + c2*R2 + c3*R2*R2*R2)) - 273.15; // cube root R2
 }
 
 // Blink LEDs
@@ -231,7 +226,7 @@ void refresh_serial()
             }
             else
             {
-                Serial.print("No rain");
+                Serial.print("No");
             }
             Serial.print(",");
             Serial.println(ilimunationVoltage);
